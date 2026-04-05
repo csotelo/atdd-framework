@@ -6,22 +6,38 @@
 
 ## Why this exists
 
-This project started as personal curiosity.
+Building a product solo is brutal.
 
-As a technical Product Owner, I spend a lot of time thinking about how to define scope clearly, how to make acceptance criteria unambiguous, and how to ensure that what gets built is exactly what was agreed — not an approximation.
+You are the PO, the architect, the developer, the QA, and the one making sure the lights stay on — all at the same time, with a calendar that never has enough hours. At some point you stop asking "how do I build faster?" and start asking a harder question:
 
-When AI coding agents started becoming real tools (not just demos), I asked myself a simple question:
+> *What can I actually automate without losing control of what gets built?*
 
-> *Can I give an AI agent the same responsibilities I'd give a role in a Scrum team — and hold it to the same standards?*
+I've been a programmer for years and a Product Owner long enough to know that most failures don't come from bad code — they come from ambiguous requirements, skipped tests, and "it works on my machine." So when AI coding agents started becoming real tools, I didn't see a magic button. I saw a new kind of team member that needed the same thing any team member needs: clear responsibilities, short tasks, and verifiable criteria for done.
 
-Not "can an AI write code?" — that bar is already cleared. The real question is whether you can build a system where:
+The first thing I tried was the obvious approach: long prompts, one agent, do everything. It failed the way it always fails — the AI hallucinated, lost context, and confidently built the wrong thing. Long prompts tend to fail. The model drifts. The output is plausible but wrong.
 
-- A **spec is the source of truth**, not a ticket in Jira
-- Each **role has clear, independent criteria** for what "done" means
-- The pipeline moves **autonomously**, triggered by events, not by someone checking Slack
-- **Acceptance tests are the final judge** — not the developer, not the PO, not a linter
+Then I applied something I already knew from software architecture:
 
-That curiosity led to this framework.
+> **Divide and conquer.**
+
+If a long prompt fails, what about a very short one with a very specific context? What if instead of one agent doing everything, you had multiple agents — each with a single role, a precise skill, and just enough context to do their job and nothing else?
+
+That's where my background as a PO and architect converged with the agent world.
+
+I already knew how to write well-structured user stories. I already thought in roles and responsibilities. I already used acceptance criteria as the definition of done. The missing piece was a system to coordinate it all — to take a story that's ready and move it through a pipeline of specialized agents, each doing one thing, each passing a quality gate before the next one starts.
+
+So I built it:
+
+- **Claude** as the architect colleague — the AI that's exceptional at understanding context, structuring problems, and generating precise, short prompts for each downstream agent. Claude doesn't execute. Claude thinks.
+- **OpenCode** for the autonomous roles — test engineer, developer, tester. Short prompts, clear scope, no ambiguity. Fast, focused, cheap.
+- **Celery + Redis** as the coordination layer — a queue that manages role transitions, ensures order, and decouples each stage from the next.
+- **Gherkin acceptance scenarios** as the only real verdict — not the developer saying "it's done," not a linter passing, but the actual feature working end-to-end with Playwright.
+
+The result is a system where I write the spec and the acceptance criteria with Claude, mark the story as ready, and walk away. The pipeline runs. Tests get written in RED. Code gets written until they're GREEN. Regressions get checked. Acceptance scenarios run. If everything passes, the story is `accepted`. If something breaks, it's `blocked` and waits for me.
+
+I tested this on a real project — [atf-ai](atf-ai/), a CLI tool with a full test suite. Five user stories, end-to-end, from spec to acceptance. It worked.
+
+This is that system, released.
 
 ---
 
