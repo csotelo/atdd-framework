@@ -1,0 +1,75 @@
+services:
+
+  # ── Broker ────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  # ── git-sync — polling, encola inbox, commit+push ─────────────────────────
+  git-sync:
+    build:
+      context: .
+      dockerfile: services/git-sync/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ${PROJECTS_ROOT}:/projects
+      - ${SKILLS_DIR}:/root/.claude/skills:ro
+      - ./projects.yml:/app/projects.yml:ro
+    depends_on:
+      - redis
+
+  # ── Workers ───────────────────────────────────────────────────────────────
+  test-engineer:
+    build:
+      context: .
+      dockerfile: services/test-engineer/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ${PROJECTS_ROOT}:/projects
+      - ${SKILLS_DIR}:/root/.claude/skills:ro
+      - ${OPENCODE_CONFIG_DIR}:/root/.config/opencode:ro
+    depends_on:
+      - redis
+
+  developer:
+    build:
+      context: .
+      dockerfile: services/developer/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ${PROJECTS_ROOT}:/projects
+      - ${SKILLS_DIR}:/root/.claude/skills:ro
+      - ${OPENCODE_CONFIG_DIR}:/root/.config/opencode:ro
+    depends_on:
+      - redis
+
+  tester:
+    build:
+      context: .
+      dockerfile: services/tester/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ${PROJECTS_ROOT}:/projects
+      - ${SKILLS_DIR}:/root/.claude/skills:ro
+      - ${OPENCODE_CONFIG_DIR}:/root/.config/opencode:ro
+    depends_on:
+      - redis
+
+  atf-worker:
+    build:
+      context: .
+      dockerfile: services/atf-worker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ${PROJECTS_ROOT}:/projects
+      - ${SKILLS_DIR}:/root/.claude/skills:ro
+      - ${OPENCODE_CONFIG_DIR}:/root/.config/opencode:ro
+    depends_on:
+      - redis

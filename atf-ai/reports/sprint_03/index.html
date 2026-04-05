@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATF Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .scenario { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .passed { background-color: #d4edda; }
+        .failed { background-color: #f8d7da; }
+        .status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Test Report</h1>
+    
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: WebUser fills and submits a form
+            <ul><li>Given I am a WebUser - </li><li>When I navigate to &quot;https://the-internet.herokuapp.com/login&quot; - </li><li>And I fill in &quot;username&quot; with &quot;tomsmith&quot; - </li><li>And I fill in &quot;password&quot; with &quot;SuperSecretPassword!&quot; - </li><li>And I click the &quot;Login&quot; button - </li><li>Then I should see &quot;You logged into a secure area!&quot; - </li></ul>
+        </div>
+        
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: WebUser sees elements on a page
+            <ul><li>Given I am a WebUser - </li><li>When I navigate to &quot;https://the-internet.herokuapp.com/checkboxes&quot; - </li><li>Then the element &quot;input[type=&#x27;checkbox&#x27;]&quot; should be visible - </li></ul>
+        </div>
+        
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: ApiClient reads a specific field
+            <ul><li>Given I am an ApiClient - </li><li>When I call GET &quot;https://jsonplaceholder.typicode.com/posts/1&quot; - </li><li>Then the response status should be 200 - </li><li>And the response field &quot;userId&quot; should equal &quot;1&quot; - </li></ul>
+        </div>
+        
+</body>
+</html>

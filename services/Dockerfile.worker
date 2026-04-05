@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+# Dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar OpenCode
+RUN curl -fsSL https://opencode.ai/install | bash
+ENV PATH="/root/.opencode/bin:$PATH"
+
+WORKDIR /app
+
+# Instalar dependencias Python
+COPY pyproject.toml .
+RUN pip install --no-cache-dir -e .
+
+# Código del orquestador
+COPY atdd_orchestrator/ ./atdd_orchestrator/

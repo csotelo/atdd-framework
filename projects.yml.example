@@ -1,0 +1,9 @@
+# Lista de proyectos que el orquestador monitorea.
+# Copiar como projects.yml y ajustar las rutas al servidor.
+#
+# Cada entrada es el path absoluto al proyecto dentro del contenedor
+# (mapeado desde PROJECTS_ROOT en docker-compose.yml).
+
+projects:
+  - /projects/atf-ai
+  # - /projects/mi-otro-proyecto

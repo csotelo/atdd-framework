@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATF Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .scenario { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .passed { background-color: #d4edda; }
+        .failed { background-color: #f8d7da; }
+        .status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Test Report</h1>
+    
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: State file exists and sprint is tracked
+            <ul><li>Given the state file exists - </li><li>Then sprint &quot;sprint_04&quot; should have status &quot;pending&quot; - </li></ul>
+        </div>
+        
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: WebUser navigates to confirm app is working
+            <ul><li>Given I am a WebUser - </li><li>When I navigate to &quot;https://the-internet.herokuapp.com&quot; - </li><li>Then I should see &quot;Welcome to the-internet&quot; - </li></ul>
+        </div>
+        
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: ApiClient confirms external API works
+            <ul><li>Given I am an ApiClient - </li><li>When I call GET &quot;https://jsonplaceholder.typicode.com/todos/1&quot; - </li><li>Then the response status should be 200 - </li><li>And the response should contain &quot;delectus aut autem&quot; - </li></ul>
+        </div>
+        
+</body>
+</html>

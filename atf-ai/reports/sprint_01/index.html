@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATF Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .scenario { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .passed { background-color: #d4edda; }
+        .failed { background-color: #f8d7da; }
+        .status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Test Report</h1>
+    
+        <div class="scenario failed">
+            <span class="status">FAILED</span>: atf binary is installed and shows help
+            <ul><li>Given the state file exists - </li><li>Then sprint &quot;sprint_01&quot; should have status &quot;pending&quot; - </li></ul>
+        </div>
+        
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: Public web target is reachable
+            <ul><li>Given I am a WebUser - </li><li>When I navigate to &quot;https://the-internet.herokuapp.com&quot; - </li><li>Then I should see &quot;Welcome to the-internet&quot; - </li></ul>
+        </div>
+        
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATF Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .scenario { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .passed { background-color: #d4edda; }
+        .failed { background-color: #f8d7da; }
+        .status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Test Report</h1>
+    
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: WebUser can interact with a table
+            <ul><li>Given I am a WebUser - </li><li>When I navigate to &quot;https://the-internet.herokuapp.com/tables&quot; - </li><li>Then I should see &quot;Data Tables&quot; - </li><li>Then the element &quot;table&quot; should be visible - </li></ul>
+        </div>
+        
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: Report file is generated after run
+            <ul><li>Given I am a WebUser - </li><li>When I navigate to &quot;https://the-internet.herokuapp.com&quot; - </li><li>Then I should see &quot;Welcome to the-internet&quot; - </li><li>And a report file should exist at &quot;reports/sprint_05/index.html&quot; - </li></ul>
+        </div>
+        
+        <div class="scenario passed">
+            <span class="status">PASSED</span>: ApiClient posts data
+            <ul><li>Given I am an ApiClient - </li><li>When I call POST &quot;https://jsonplaceholder.typicode.com/posts&quot; with body: - </li><li>Then the response status should be 201 - </li><li>And the response should contain &quot;atf test&quot; - </li></ul>
+        </div>
+        
+</body>
+</html>

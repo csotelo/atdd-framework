@@ -1,0 +1,14 @@
+{
+  "baseURL": "http://localhost:3000",
+  "promptsDir": "prompts",
+  "reportsDir": "reports",
+  "stateFile": "atf-state.json",
+  "headless": true,
+  "timeout": 30000,
+  "retries": 1,
+  "screenshots": "only-on-failure",
+  "docker": {
+    "image": "mcr.microsoft.com/playwright/python:latest",
+    "pull_policy": "if-not-present"
+  }
+}

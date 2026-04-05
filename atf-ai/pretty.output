@@ -1,0 +1,13 @@
+Feature: [Sprint 01] ATF CLI scaffolding # prompts/sprint_01/acceptance.feature:1
+
+  Scenario: atf binary is installed and shows help       # prompts/sprint_01/acceptance.feature:3
+    Given the state file exists                          # prompts/steps/assertion_steps.py:10
+    Then sprint "sprint_01" should have status "pending" # prompts/steps/assertion_steps.py:17
+      ASSERT FAILED: Expected status pending, got failed
+
+
+  Scenario: Public web target is reachable                  # prompts/sprint_01/acceptance.feature:7
+    Given I am a WebUser                                    # prompts/steps/navigation_steps.py:9
+    When I navigate to "https://the-internet.herokuapp.com" # prompts/steps/navigation_steps.py:15
+    Then I should see "Welcome to the-internet"             # prompts/steps/navigation_steps.py:22
+

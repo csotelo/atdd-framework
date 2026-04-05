@@ -1,0 +1,67 @@
+{
+  "project": "",
+  "current_sprint": "sprint_01",
+  "sprints": {
+    "sprint_01": {
+      "status": "failed",
+      "last_run": "2026-04-03T01:42:53.074806+00:00",
+      "duration_seconds": 134.7332170009613,
+      "scenarios": {
+        "total": 2,
+        "passed": 1,
+        "failed": 1
+      },
+      "failures": [
+        {
+          "scenario": "atf binary is installed and shows help",
+          "step": "Then sprint \"sprint_01\" should have status \"pending\"",
+          "error": "ASSERT FAILED: Expected status pending, got failed"
+        }
+      ]
+    },
+    "sprint_02": {
+      "status": "passed",
+      "last_run": "2026-04-03T00:19:42.196007+00:00",
+      "duration_seconds": 234.7419068813324,
+      "scenarios": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "failures": []
+    },
+    "sprint_03": {
+      "status": "passed",
+      "last_run": "2026-04-03T00:10:59.038000+00:00",
+      "duration_seconds": 146.19669318199158,
+      "scenarios": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      "failures": []
+    },
+    "sprint_04": {
+      "status": "passed",
+      "last_run": "2026-04-03T00:35:38.558540+00:00",
+      "duration_seconds": 194.11086440086365,
+      "scenarios": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      "failures": []
+    },
+    "sprint_05": {
+      "status": "passed",
+      "last_run": "2026-04-03T01:35:07.441764+00:00",
+      "duration_seconds": 249.1891267299652,
+      "scenarios": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      "failures": []
+    }
+  }
+}
