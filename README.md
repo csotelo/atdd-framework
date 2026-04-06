@@ -68,7 +68,7 @@ No human approval needed between test-writing and acceptance. The spec is the co
     │
     │  story.md → status: ready
     │
-[Celery + Redis — fully autonomous from here]
+[Celery + Redis  ·or·  LangGraph — fully autonomous from here]
     │
     ├── test_engineer   →  status: tests-written
     │   Writes unit + integration tests in RED (failing, no implementation yet)
@@ -78,10 +78,12 @@ No human approval needed between test-writing and acceptance. The spec is the co
     │
     ├── tester          →  status: tested
     │   Verifies regressions, runs ruff + mypy, checks nothing else broke
+    │   ↑ retries developer (up to 3×) if quality gate fails
     │
     └── atf_worker      →  status: accepted
         Runs acceptance.feature with Playwright + Behave
         This is the only verdict that matters.
+        ↑ retries developer (up to 3×) if acceptance fails
 ```
 
 Each agent runs via [OpenCode](https://opencode.ai) (`opencode run "prompt"`), independently, with no shared state beyond the story file. The orchestrator polls every 30 seconds and dispatches the next task when a story's status advances.
@@ -131,7 +133,7 @@ Special statuses for recovery and migration:
 atdd/
 ├── atdd_orchestrator/
 │   ├── config.py
-│   ├── dispatcher.py              # entry point — polls every 30s
+│   ├── dispatcher.py              # entry point Celery — polls every 30s
 │   ├── domain/
 │   │   ├── story.py               # Story entity + Status value object
 │   │   └── ports.py               # interfaces: StoryRepository, CodeRunner, TaskQueue
@@ -140,14 +142,19 @@ atdd/
 │   └── infrastructure/
 │       ├── frontmatter_repo.py    # reads/writes story.md via YAML frontmatter
 │       ├── opencode_runner.py     # CodeRunner → subprocess opencode
-│       └── celery/
-│           ├── app.py             # Celery instance
-│           ├── queue_adapter.py   # TaskQueue implementation
-│           └── tasks.py           # thin wrappers → use cases
+│       ├── celery/
+│       │   ├── app.py             # Celery instance
+│       │   ├── queue_adapter.py   # TaskQueue implementation
+│       │   └── tasks.py           # thin wrappers → use cases
+│       └── langgraph/
+│           ├── state.py           # PipelineState TypedDict
+│           ├── nodes.py           # nodes that call use cases (NoOpQueue)
+│           └── graph.py           # StateGraph with conditional edges + retry logic
+├── dispatcher_langgraph.py        # entry point LangGraph — no Redis required
 ├── skills/                        # Claude Code skills (architect, developer, …)
 ├── atf-ai/                        # real project running on this framework
 ├── tests/                         # 35 tests, 0 failures, no external dependencies
-├── docker-compose.yml             # Redis only
+├── docker-compose.yml             # Redis only (Celery mode)
 ├── pyproject.toml
 ├── install.sh                     # syncs skills + installs dependencies
 └── projects.yml.example           # multi-project configuration example
@@ -212,6 +219,15 @@ Syncs Claude Code skills to `~/.claude/skills/` and installs Python dependencies
 
 ### Run
 
+Two modes — pick one:
+
+**LangGraph (no Redis required):**
+```bash
+pip install -e ".[langgraph]"
+python dispatcher_langgraph.py /path/to/your/project
+```
+
+**Celery + Redis (distributed):**
 ```bash
 # 1. Start Redis
 docker compose up -d
@@ -259,8 +275,8 @@ If you have an existing project using the old `.atf/` format, the `atdd_architec
 
 ## Design decisions
 
-**Why Celery + Redis and not a simple loop?**
-Each agent runs independently. A queue decouples the orchestrator from execution — if a developer task takes 10 minutes, the dispatcher isn't blocked. It also gives us retries, visibility, and a natural place to add priorities later.
+**Why two orchestration modes (Celery and LangGraph)?**
+LangGraph makes the state machine explicit as Python code — no Redis, no broker, easier to run locally and inspect. Celery is better for distributed setups where workers run on separate machines. Both share the same domain and use cases; the difference is only in the infrastructure adapter.
 
 **Why OpenCode for autonomous roles?**
 Claude credits are expensive and strategic. OpenCode handles the technical execution (writing tests, implementing code, running checks) at a lower cost. Claude is reserved for the `architect` role — the work that actually requires judgment.

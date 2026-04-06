@@ -19,6 +19,9 @@ dev = [
     "pytest>=8.0",
     "pytest-celery",
 ]
+langgraph = [
+    "langgraph>=0.2",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["atdd_orchestrator"]

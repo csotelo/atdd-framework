@@ -7,6 +7,25 @@ Format: `[version] — YYYY-MM-DD`
 
 ---
 
+## [0.2.0] — 2026-04-06
+
+### Added
+
+- Adaptador LangGraph como alternativa a Celery + Redis (`infrastructure/langgraph/`)
+  - `state.py` — `PipelineState` TypedDict con story, status, retries
+  - `nodes.py` — 4 nodos que llaman los use cases existentes con `NoOpQueue`
+  - `graph.py` — `StateGraph` con edges condicionales: retry automático hasta 3 veces si tester/atf fallan
+- `dispatcher_langgraph.py` — entry point sin Redis; lanza el grafo por historia en status INBOX
+- `langgraph` como dependencia opcional en `pyproject.toml` (`pip install -e ".[langgraph]"`)
+
+### Architecture decisions
+
+- LangGraph hace el routing explícito (edges condicionales) en lugar de que los use cases encolen la siguiente tarea
+- Los use cases reciben `NoOpQueue` — sin cambios al dominio ni a los use cases existentes
+- Celery sigue disponible; LangGraph es opt-in, no un reemplazo obligatorio
+
+---
+
 ## [0.1.0] — 2026-04-03
 
 ### Added
