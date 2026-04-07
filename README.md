@@ -132,29 +132,32 @@ Special statuses for recovery and migration:
 ```
 atdd/
 ├── atdd_orchestrator/
-│   ├── config.py
-│   ├── dispatcher.py              # entry point Celery — polls every 30s
+│   ├── __main__.py                # entry point — python -m atdd_orchestrator
+│   ├── config.py                  # PIPELINE_ENGINE, POLL_INTERVAL, REDIS_URL, …
 │   ├── domain/
 │   │   ├── story.py               # Story entity + Status value object
-│   │   └── ports.py               # interfaces: StoryRepository, CodeRunner, TaskQueue
+│   │   └── ports.py               # StoryRepository, CodeRunner, TaskQueue, PipelineExecutor
 │   ├── application/
 │   │   └── use_cases/             # dispatch, run_test_engineer, run_developer, …
 │   └── infrastructure/
+│       ├── git_adapter.py         # pure git adapter: configure, pull, commit, push
 │       ├── frontmatter_repo.py    # reads/writes story.md via YAML frontmatter
 │       ├── opencode_runner.py     # CodeRunner → subprocess opencode
 │       ├── celery/
-│       │   ├── app.py             # Celery instance
-│       │   ├── queue_adapter.py   # TaskQueue implementation
-│       │   └── tasks.py           # thin wrappers → use cases
+│       │   ├── app.py             # Celery instance + task_routes
+│       │   ├── pipeline_executor.py  # PipelineExecutor → send_task (production engine)
+│       │   ├── queue_adapter.py   # TaskQueue → inter-worker enqueue
+│       │   └── tasks.py           # thin Celery tasks → use cases
 │       └── langgraph/
 │           ├── state.py           # PipelineState TypedDict
-│           ├── nodes.py           # nodes that call use cases (NoOpQueue)
-│           └── graph.py           # StateGraph with conditional edges + retry logic
-├── dispatcher_langgraph.py        # entry point LangGraph — no Redis required
+│           ├── nodes.py           # nodes → use cases (GraphRoutedQueue)
+│           ├── graph.py           # StateGraph with conditional edges + retry logic
+│           └── pipeline_executor.py  # PipelineExecutor → graph.invoke (local dev engine)
+├── whitepapers/                   # technical articles
 ├── skills/                        # Claude Code skills (architect, developer, …)
 ├── atf-ai/                        # real project running on this framework
 ├── tests/                         # 35 tests, 0 failures, no external dependencies
-├── docker-compose.yml             # Redis only (Celery mode)
+├── docker-compose.yml             # Redis + 4 worker containers (Celery mode)
 ├── pyproject.toml
 ├── install.sh                     # syncs skills + installs dependencies
 └── projects.yml.example           # multi-project configuration example
@@ -167,8 +170,11 @@ The orchestrator follows strict hexagonal architecture:
 ```
 domain          — no external dependencies, pure Python
 application     — imports domain only
-infrastructure  — imports domain + application + external libs (Celery, Redis, frontmatter)
+infrastructure  — adapters only (Celery, LangGraph, git, frontmatter, opencode)
+__main__.py     — entry point, wires everything together
 ```
+
+`__main__.py` depends on the `PipelineExecutor` port — it never imports Celery or LangGraph directly. The engine is selected at runtime via `PIPELINE_ENGINE` env var.
 
 Use cases are fully testable without Redis or OpenCode — ports are injected as stubs in `tests/stubs.py`.
 
@@ -219,24 +225,38 @@ Syncs Claude Code skills to `~/.claude/skills/` and installs Python dependencies
 
 ### Run
 
-Two modes — pick one:
+The engine is selected by the `PIPELINE_ENGINE` variable in your `.env`. Copy the example and configure it:
 
-**LangGraph (no Redis required):**
 ```bash
-pip install -e ".[langgraph]"
-python dispatcher_langgraph.py /path/to/your/project
+cp .env.example .env
 ```
 
-**Celery + Redis (distributed):**
+**Celery (production — default):**
+
 ```bash
-# 1. Start Redis
-docker compose up -d
+# .env
+PIPELINE_ENGINE=celery
 
-# 2. Start the Celery worker
-.venv/bin/celery -A atdd_orchestrator.infrastructure.celery.app worker --loglevel=info
+docker compose up
+```
 
-# 3. Start the dispatcher pointing to your project
-.venv/bin/python -m atdd_orchestrator.dispatcher /path/to/your/project
+Starts Redis and 4 worker containers (test-engineer, developer, tester, atf). Each role runs isolated. Multiple stories and projects advance in parallel.
+
+**LangGraph (local development — no Redis required):**
+
+```bash
+# .env
+PIPELINE_ENGINE=langgraph
+
+docker compose up git-sync
+```
+
+Starts only the git-sync container. The pipeline runs fully in-process, sequentially, without Redis or worker containers. Useful for debugging a single project locally.
+
+**Without Docker (development):**
+
+```bash
+PIPELINE_ENGINE=langgraph .venv/bin/python -m atdd_orchestrator
 ```
 
 ### Initialize a project
@@ -275,8 +295,10 @@ If you have an existing project using the old `.atf/` format, the `atdd_architec
 
 ## Design decisions
 
-**Why two orchestration modes (Celery and LangGraph)?**
-LangGraph makes the state machine explicit as Python code — no Redis, no broker, easier to run locally and inspect. Celery is better for distributed setups where workers run on separate machines. Both share the same domain and use cases; the difference is only in the infrastructure adapter.
+**Why Celery for production and LangGraph for local development?**
+Celery runs each role in its own isolated container — a slow story blocks only one worker, not the entire system. If a container crashes, Redis preserves the message and the worker retries when it comes back. LangGraph executes the full pipeline in a single process: simpler to run locally, but one slow story blocks git-sync entirely, and a crash mid-pipeline leaves the story in an intermediate state with no resume mechanism.
+
+Both engines share the same domain and use cases. The `PipelineExecutor` port in `domain/ports.py` is the abstraction that makes this possible — `__main__.py` never imports Celery or LangGraph directly. The engine is a deployment detail, not a design detail.
 
 **Why OpenCode for autonomous roles?**
 Claude credits are expensive and strategic. OpenCode handles the technical execution (writing tests, implementing code, running checks) at a lower cost. Claude is reserved for the `architect` role — the work that actually requires judgment.

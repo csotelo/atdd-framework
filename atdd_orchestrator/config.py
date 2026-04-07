@@ -1,5 +1,6 @@
 import os
 
+PIPELINE_ENGINE    = os.environ.get("PIPELINE_ENGINE", "celery")  # "celery" | "langgraph"
 REDIS_URL          = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 POLL_INTERVAL      = int(os.environ.get("POLL_INTERVAL", "30"))
 WORKER_CONCURRENCY = int(os.environ.get("WORKER_CONCURRENCY", "1"))

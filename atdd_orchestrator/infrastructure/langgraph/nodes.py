@@ -21,8 +21,13 @@ from .state import PipelineState
 log = logging.getLogger(__name__)
 
 
-class _NoOpQueue(TaskQueue):
-    """Cola vacía — el grafo decide el siguiente nodo, no los use cases."""
+class GraphRoutedQueue(TaskQueue):
+    """Cola sin efecto — el grafo LangGraph maneja el routing entre nodos.
+
+    Los use cases llaman queue.enqueue() al finalizar cada paso; en el
+    modelo LangGraph esa llamada es intencionalmente ignorada porque el
+    grafo decide el siguiente nodo leyendo el status del repositorio.
+    """
 
     def enqueue(self, task_name: str, story_id: str) -> None:
         pass
@@ -32,7 +37,7 @@ def _deps(project_path: str):
     repo = FrontmatterStoryRepository(project_path)
     runner = OpenCodeRunner(project_path)
     notifier = TelegramNotifier()
-    queue = _NoOpQueue()
+    queue = GraphRoutedQueue()
     return repo, runner, notifier, queue
 
 

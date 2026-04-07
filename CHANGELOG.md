@@ -7,6 +7,38 @@ Format: `[version] — YYYY-MM-DD`
 
 ---
 
+## [0.3.0] — 2026-04-07
+
+### Added
+
+- Puerto `PipelineExecutor` en `domain/ports.py` — abstracción del motor de ejecución del pipeline
+- `infrastructure/celery/pipeline_executor.py` — `CeleryPipelineExecutor`: envía la historia al primer worker via `send_task`
+- `infrastructure/langgraph/pipeline_executor.py` — `LangGraphPipelineExecutor`: ejecuta el grafo completo en proceso
+- `PIPELINE_ENGINE` env var en `config.py` — selecciona el motor (`"celery"` default | `"langgraph"`)
+
+### Changed
+
+- `application/use_cases/dispatch.py` — `DispatchStories` recibe `PipelineExecutor` en lugar de `TaskQueue`; responsabilidad única y clara
+- `infrastructure/langgraph/nodes.py` — `_NoOpQueue` renombrado a `GraphRoutedQueue` con docstring que explica el patrón explícitamente
+- `services/git-sync/Dockerfile` — CMD actualizado a `python -m atdd_orchestrator`
+
+### Removed
+
+- `atdd_orchestrator/dispatcher.py` — eliminado (era OBSOLETO desde 0.2.0)
+- `dispatcher_langgraph.py` (raíz) — eliminado; absorbido por `LangGraphPipelineExecutor`
+- `infrastructure/git_sync.py` — eliminado; separado en `__main__.py` + `infrastructure/git_adapter.py`
+
+### Architecture decisions
+
+- `__main__.py` es el entry point correcto en hexagonal architecture — los drivers de la aplicación no pertenecen a `infrastructure/`
+- `infrastructure/git_adapter.py` es un adaptador puro: solo operaciones git sin lógica de orquestación
+- `PipelineExecutor` es el puerto correcto para el punto de entrada del pipeline; `TaskQueue` queda restringido a la comunicación interna entre workers Celery
+- Celery es el motor de producción: aislamiento real por container, paralelismo entre proyectos, resiliencia ante caídas
+- LangGraph es el motor de desarrollo local: sin Redis, sin workers, ejecución secuencial en proceso
+- Lanzamiento: `python -m atdd_orchestrator` (local) o `docker compose up` (producción)
+
+---
+
 ## [0.2.0] — 2026-04-06
 
 ### Added

@@ -1,18 +1,14 @@
-from atdd_orchestrator.domain.ports import StoryRepository, TaskQueue
+from atdd_orchestrator.domain.ports import StoryRepository, PipelineExecutor
 from atdd_orchestrator.domain.story import Status
-
-# git-sync llama este use case para encolar historias recién marcadas como inbox
-TRANSITIONS: dict[Status, str] = {
-    Status.INBOX: "run_test_engineer",
-}
 
 
 class DispatchStories:
-    def __init__(self, story_repo: StoryRepository, queue: TaskQueue) -> None:
+    """Detecta historias en INBOX y las envía al pipeline configurado."""
+
+    def __init__(self, story_repo: StoryRepository, executor: PipelineExecutor) -> None:
         self._repo = story_repo
-        self._queue = queue
+        self._executor = executor
 
     def execute(self) -> None:
-        for status, task_name in TRANSITIONS.items():
-            for story_id in self._repo.find_by_status(status):
-                self._queue.enqueue(task_name, story_id)
+        for story_id in self._repo.find_by_status(Status.INBOX):
+            self._executor.submit(story_id)

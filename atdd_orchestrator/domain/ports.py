@@ -19,8 +19,19 @@ class CodeRunner(ABC):
 
 
 class TaskQueue(ABC):
+    """Cola de tareas entre workers (usado por el motor Celery)."""
     @abstractmethod
     def enqueue(self, task_name: str, story_id: str) -> None: ...
+
+
+class PipelineExecutor(ABC):
+    """Arranca el pipeline completo para una historia en INBOX.
+
+    Cada motor (Celery, LangGraph) provee su implementación.
+    git-sync depende de este puerto, no del motor concreto.
+    """
+    @abstractmethod
+    def submit(self, story_id: str) -> None: ...
 
 
 class Notifier(ABC):

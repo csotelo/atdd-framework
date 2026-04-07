@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -e . pyyaml
 
 COPY atdd_orchestrator/ ./atdd_orchestrator/
 
-CMD ["python", "-m", "atdd_orchestrator.infrastructure.git_sync"]
+CMD ["python", "-m", "atdd_orchestrator"]
