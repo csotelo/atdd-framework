@@ -8,12 +8,12 @@ from atdd_orchestrator.domain.story import Status
 
 @pytest.fixture
 def project(tmp_path: Path) -> Path:
-    """Proyecto temporal con una historia en backlog."""
+    """Temporary project with one story in the backlog."""
     backlog = tmp_path / ".atdd" / "backlog" / "US01-login"
     backlog.mkdir(parents=True)
     story = backlog / "story.md"
     story.write_text(
-        "---\nid: US01\ntitle: Login\nstatus: inbox\nsprint: sprint_01\n---\nDescripción.\n"
+        "---\nid: US01\ntitle: Login\nstatus: inbox\nsprint: sprint_01\n---\nDescription.\n"
     )
     return tmp_path
 
@@ -37,7 +37,7 @@ def test_save_status_updates_frontmatter_on_disk(project):
 
 def test_save_status_with_note_writes_blocked_reason(project):
     repo = FrontmatterStoryRepository(str(project))
-    repo.save_status("US01-login", Status.BLOCKED, note="timeout en opencode")
+    repo.save_status("US01-login", Status.BLOCKED, note="opencode timeout")
     post = frontmatter.load(project / ".atdd" / "backlog" / "US01-login" / "story.md")
     assert post["status"] == "blocked"
     assert post["blocked_reason"] == "timeout en opencode"
@@ -45,7 +45,7 @@ def test_save_status_with_note_writes_blocked_reason(project):
 
 def test_save_status_clears_blocked_reason_when_note_empty(project):
     repo = FrontmatterStoryRepository(str(project))
-    repo.save_status("US01-login", Status.BLOCKED, note="algo falló")
+    repo.save_status("US01-login", Status.BLOCKED, note="something failed")
     repo.save_status("US01-login", Status.READY_TO_DEV)
     post = frontmatter.load(project / ".atdd" / "backlog" / "US01-login" / "story.md")
     assert "blocked_reason" not in post.metadata

@@ -12,7 +12,7 @@ class Status(str, Enum):
     DONE          = "done"
     BLOCKED       = "blocked"
 
-    # Estados legacy (migración / compatibilidad backlog)
+    # Legacy statuses (migration / backlog compatibility)
     DRAFT         = "draft"
     UNVERIFIED    = "unverified"
     DAMAGED       = "damaged"

@@ -3,7 +3,7 @@ from atdd_orchestrator.infrastructure.celery.app import app
 
 
 class CeleryPipelineExecutor(PipelineExecutor):
-    """Envía la historia al primer worker Celery (test_engineer → cola inbox)."""
+    """Submits the story to the first Celery worker (test_engineer → inbox queue)."""
 
     def __init__(self, project_path: str) -> None:
         self._project_path = project_path

@@ -2,9 +2,9 @@ from atdd_orchestrator.domain.ports import StoryRepository, CodeRunner, TaskQueu
 from atdd_orchestrator.domain.story import Status
 
 _PROMPT = (
-    "Actúa como /atdd_developer. "
-    "La historia {story_id} tiene status: in-progress:ready-to-dev. "
-    "Lee el prompt.md y construye el código para que los tests pasen (GREEN)."
+    "Act as /atdd_developer. "
+    "Story {story_id} has status: in-progress:ready-to-dev. "
+    "Read prompt.md and write the implementation to make the tests pass (GREEN)."
 )
 
 

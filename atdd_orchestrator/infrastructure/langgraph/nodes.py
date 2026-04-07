@@ -1,9 +1,9 @@
 """
-Nodos del grafo LangGraph.
+LangGraph pipeline nodes.
 
-Cada nodo llama al use case correspondiente pasándole un NoOpQueue
-(el grafo maneja el routing, no la cola). Después de ejecutar, lee
-el status actual del repo para actualizar el estado del grafo.
+Each node calls the corresponding use case passing a GraphRoutedQueue
+(the graph handles routing, not the queue). After execution, reads
+the current status from the repo to update the graph state.
 """
 import logging
 
@@ -22,11 +22,11 @@ log = logging.getLogger(__name__)
 
 
 class GraphRoutedQueue(TaskQueue):
-    """Cola sin efecto — el grafo LangGraph maneja el routing entre nodos.
+    """No-effect queue — the LangGraph state machine handles routing between nodes.
 
-    Los use cases llaman queue.enqueue() al finalizar cada paso; en el
-    modelo LangGraph esa llamada es intencionalmente ignorada porque el
-    grafo decide el siguiente nodo leyendo el status del repositorio.
+    Use cases call queue.enqueue() at the end of each step; in the LangGraph
+    model that call is intentionally ignored because the graph decides the next
+    node by reading the story status from the repository.
     """
 
     def enqueue(self, task_name: str, story_id: str) -> None:
@@ -54,13 +54,13 @@ def _read_status(project_path: str, story_id: str) -> tuple[Status, str]:
 def test_engineer_node(state: PipelineState) -> PipelineState:
     story_id = state["story_id"]
     project_path = state["project_path"]
-    log.info("[test_engineer] historia=%s", story_id)
+    log.info("[test_engineer] story=%s", story_id)
 
     repo, runner, notifier, queue = _deps(project_path)
     try:
         RunTestEngineer(repo, runner, queue, notifier).execute(story_id)
     except Exception:
-        pass  # use case ya guardó BLOCKED en el repo
+        pass  # use case already saved BLOCKED to the repo
 
     status, reason = _read_status(project_path, story_id)
     return {**state, "status": status, "blocked_reason": reason}
@@ -69,13 +69,13 @@ def test_engineer_node(state: PipelineState) -> PipelineState:
 def developer_node(state: PipelineState) -> PipelineState:
     story_id = state["story_id"]
     project_path = state["project_path"]
-    log.info("[developer] historia=%s retry=%d", story_id, state["dev_retries"])
+    log.info("[developer] story=%s retry=%d", story_id, state["dev_retries"])
 
     repo, runner, notifier, queue = _deps(project_path)
     try:
         RunDeveloper(repo, runner, queue).execute(story_id)
     except Exception:
-        pass  # use case ya guardó BLOCKED en el repo
+        pass  # use case already saved BLOCKED to the repo
 
     status, reason = _read_status(project_path, story_id)
     return {**state, "status": status, "blocked_reason": reason}
@@ -84,14 +84,14 @@ def developer_node(state: PipelineState) -> PipelineState:
 def tester_node(state: PipelineState) -> PipelineState:
     story_id = state["story_id"]
     project_path = state["project_path"]
-    log.info("[tester] historia=%s", story_id)
+    log.info("[tester] story=%s", story_id)
 
     repo, runner, notifier, queue = _deps(project_path)
-    # RunTester captura su propia excepción y guarda READY_TO_DEV si falla
+    # RunTester catches its own exception and saves READY_TO_DEV on failure
     RunTester(repo, runner, queue).execute(story_id)
 
     status, reason = _read_status(project_path, story_id)
-    # Si tester falló y volvió a READY_TO_DEV, incrementar retry counter
+    # If tester failed and returned to READY_TO_DEV, increment retry counter
     dev_retries = state["dev_retries"]
     if status == Status.READY_TO_DEV:
         dev_retries += 1
@@ -101,10 +101,10 @@ def tester_node(state: PipelineState) -> PipelineState:
 def atf_node(state: PipelineState) -> PipelineState:
     story_id = state["story_id"]
     project_path = state["project_path"]
-    log.info("[atf] historia=%s", story_id)
+    log.info("[atf] story=%s", story_id)
 
     repo, runner, notifier, queue = _deps(project_path)
-    # RunAtf captura su propia excepción y guarda READY_TO_DEV si falla
+    # RunAtf catches its own exception and saves READY_TO_DEV on failure
     RunAtf(repo, runner, queue, notifier).execute(story_id)
 
     status, reason = _read_status(project_path, story_id)

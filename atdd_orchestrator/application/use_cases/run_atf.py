@@ -2,11 +2,11 @@ from atdd_orchestrator.domain.ports import StoryRepository, CodeRunner, TaskQueu
 from atdd_orchestrator.domain.story import Status
 
 _PROMPT = (
-    "Actúa como /atdd_tester en modo aceptación. "
-    "La historia {story_id} tiene status: in-progress:ready-to-atf. "
-    "Corre el acceptance.feature con Behave/Playwright. "
-    "Si todos los scenarios pasan: éxito (exit 0). "
-    "Si alguno falla: falla (exit 1)."
+    "Act as /atdd_tester in acceptance mode. "
+    "Story {story_id} has status: in-progress:ready-to-atf. "
+    "Run the acceptance.feature with Behave/Playwright. "
+    "If all scenarios pass: success (exit 0). "
+    "If any fail: failure (exit 1)."
 )
 
 
@@ -30,6 +30,6 @@ class RunAtf:
             story = self._repo.get(story_id)
             self._notifier.story_done(story)
         except Exception as exc:
-            # Acceptance tests fallaron → devolver al developer
+            # Acceptance tests failed → return to developer
             self._repo.save_status(story_id, Status.READY_TO_DEV, note=str(exc))
             self._queue.enqueue("run_developer", story_id)

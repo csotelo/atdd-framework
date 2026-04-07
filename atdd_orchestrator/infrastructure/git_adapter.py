@@ -1,11 +1,11 @@
 """
-Adaptador de git — operaciones sobre repositorios locales.
+Git adapter — local repository operations.
 
-Responsabilidades únicas:
-  - configurar identidad de commit
+Single responsibilities:
+  - configure commit identity
   - pull --rebase
-  - detectar cambios pendientes
-  - commit + push automático de cambios de estado
+  - detect pending changes
+  - auto-commit + push status changes
 """
 import logging
 import subprocess
@@ -27,7 +27,7 @@ def configure(project_path: str) -> None:
 def pull(project_path: str) -> None:
     result = _run(["pull", "--rebase", "--autostash"], cwd=project_path)
     if result.returncode != 0:
-        log.warning("git pull falló en %s: %s", project_path, result.stderr.strip())
+        log.warning("git pull failed in %s: %s", project_path, result.stderr.strip())
 
 
 def has_changes(project_path: str) -> bool:
@@ -38,14 +38,14 @@ def has_changes(project_path: str) -> bool:
 def commit_and_push(project_path: str) -> None:
     _run(["add", "-A"], cwd=project_path)
     result = _run(
-        ["commit", "-m", "chore(atdd): actualización automática de estado"],
+        ["commit", "-m", "chore(atdd): automatic status update"],
         cwd=project_path,
     )
     if result.returncode != 0:
-        log.warning("git commit falló en %s: %s", project_path, result.stderr.strip())
+        log.warning("git commit failed in %s: %s", project_path, result.stderr.strip())
         return
     push = _run(["push"], cwd=project_path)
     if push.returncode != 0:
-        log.warning("git push falló en %s: %s", project_path, push.stderr.strip())
+        log.warning("git push failed in %s: %s", project_path, push.stderr.strip())
     else:
         log.info("git push OK — %s", project_path)

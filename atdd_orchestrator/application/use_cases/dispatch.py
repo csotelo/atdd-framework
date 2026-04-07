@@ -3,7 +3,7 @@ from atdd_orchestrator.domain.story import Status
 
 
 class DispatchStories:
-    """Detecta historias en INBOX y las envía al pipeline configurado."""
+    """Detects stories in INBOX and submits them to the configured pipeline engine."""
 
     def __init__(self, story_repo: StoryRepository, executor: PipelineExecutor) -> None:
         self._repo = story_repo

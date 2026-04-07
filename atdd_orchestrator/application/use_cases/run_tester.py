@@ -2,11 +2,11 @@ from atdd_orchestrator.domain.ports import StoryRepository, CodeRunner, TaskQueu
 from atdd_orchestrator.domain.story import Status
 
 _PROMPT = (
-    "Actúa como /atdd_tester. "
-    "La historia {story_id} tiene status: in-progress:ready-to-test. "
-    "Corre los tests unitarios, de integración y smoke. "
-    "Si todos pasan: éxito (exit 0). "
-    "Si alguno falla: falla (exit 1)."
+    "Act as /atdd_tester. "
+    "Story {story_id} has status: in-progress:ready-to-test. "
+    "Run unit, integration, and smoke tests. "
+    "If all pass: success (exit 0). "
+    "If any fail: failure (exit 1)."
 )
 
 
@@ -27,6 +27,6 @@ class RunTester:
             self._repo.save_status(story_id, Status.READY_TO_ATF)
             self._queue.enqueue("run_atf", story_id)
         except Exception as exc:
-            # Tests fallaron → devolver al developer
+            # Tests failed → return to developer
             self._repo.save_status(story_id, Status.READY_TO_DEV, note=str(exc))
             self._queue.enqueue("run_developer", story_id)

@@ -1,10 +1,10 @@
 """
 ATDD Orchestrator — entry point.
 
-Lanza el loop de orquestación: detecta historias listas en cada proyecto
-y las despacha al motor configurado (Celery por defecto, LangGraph para desarrollo local).
+Runs the orchestration loop: detects ready stories in each project
+and dispatches them to the configured engine (Celery by default, LangGraph for local dev).
 
-Uso:
+Usage:
     python -m atdd_orchestrator
 """
 import logging
@@ -38,7 +38,7 @@ def _make_executor(project_path: str) -> PipelineExecutor:
 def _load_projects() -> list[str]:
     path = Path(PROJECTS_FILE)
     if not path.exists():
-        log.error("No se encontró %s", PROJECTS_FILE)
+        log.error("projects file not found: %s", PROJECTS_FILE)
         return []
     with path.open() as f:
         data = yaml.safe_load(f)
@@ -46,7 +46,7 @@ def _load_projects() -> list[str]:
 
 
 def _process_project(project_path: str) -> None:
-    log.info("Procesando proyecto: %s", project_path)
+    log.info("Processing project: %s", project_path)
     git_adapter.configure(project_path)
     git_adapter.pull(project_path)
 
@@ -61,7 +61,7 @@ def _process_project(project_path: str) -> None:
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     log.info(
-        "ATDD Orchestrator iniciado — motor=%s | polling cada %ds | proyectos: %s",
+        "ATDD Orchestrator started — engine=%s | polling every %ds | projects: %s",
         PIPELINE_ENGINE,
         POLL_INTERVAL,
         PROJECTS_FILE,
@@ -72,7 +72,7 @@ def main() -> None:
             try:
                 _process_project(project_path)
             except Exception:
-                log.exception("Error procesando %s", project_path)
+                log.exception("Error processing %s", project_path)
         time.sleep(POLL_INTERVAL)
 
 

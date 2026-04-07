@@ -2,9 +2,9 @@ from atdd_orchestrator.domain.ports import StoryRepository, CodeRunner, TaskQueu
 from atdd_orchestrator.domain.story import Status
 
 _PROMPT = (
-    "Actúa como /atdd_test_engineer. "
-    "La historia {story_id} tiene status: inbox. "
-    "Escribe los tests en RED siguiendo el proceso ATDD."
+    "Act as /atdd_test_engineer. "
+    "Story {story_id} has status: inbox. "
+    "Write the tests in RED following the ATDD process."
 )
 
 

@@ -7,4 +7,4 @@ class PipelineState(TypedDict):
     project_path: str
     status: Status
     blocked_reason: Optional[str]
-    dev_retries: int  # contador de veces que developer reintentó tras fallo de tester/atf
+    dev_retries: int  # number of times developer retried after tester/atf failure

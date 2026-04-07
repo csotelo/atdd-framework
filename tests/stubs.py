@@ -1,4 +1,4 @@
-"""Implementaciones stub de los puertos para tests. Sin dependencias externas."""
+"""Stub implementations of domain ports for tests. No external dependencies."""
 from atdd_orchestrator.domain.ports import StoryRepository, CodeRunner, TaskQueue, Notifier
 from atdd_orchestrator.domain.story import Status, Story
 
@@ -9,7 +9,7 @@ class StubStoryRepository(StoryRepository):
         self.saved: list[tuple[str, Status, str]] = []
 
     def get(self, story_id: str) -> Story:
-        # Refleja el último status guardado si existe
+        # Reflect the last saved status if available
         for sid, status, _ in reversed(self.saved):
             if sid == story_id:
                 original = self._stories[story_id]

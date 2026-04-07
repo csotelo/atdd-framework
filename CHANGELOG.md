@@ -11,31 +11,34 @@ Format: `[version] — YYYY-MM-DD`
 
 ### Added
 
-- Puerto `PipelineExecutor` en `domain/ports.py` — abstracción del motor de ejecución del pipeline
-- `infrastructure/celery/pipeline_executor.py` — `CeleryPipelineExecutor`: envía la historia al primer worker via `send_task`
-- `infrastructure/langgraph/pipeline_executor.py` — `LangGraphPipelineExecutor`: ejecuta el grafo completo en proceso
-- `PIPELINE_ENGINE` env var en `config.py` — selecciona el motor (`"celery"` default | `"langgraph"`)
+- `PipelineExecutor` port in `domain/ports.py` — abstracts the pipeline execution engine from dispatch logic
+- `infrastructure/celery/pipeline_executor.py` — `CeleryPipelineExecutor`: submits the story to the first worker via `send_task`
+- `infrastructure/langgraph/pipeline_executor.py` — `LangGraphPipelineExecutor`: runs the full graph in-process
+- `infrastructure/git_adapter.py` — pure git adapter: configure, pull, detect changes, commit, push
+- `atdd_orchestrator/__main__.py` — proper entry point; runs with `python -m atdd_orchestrator`
+- `PIPELINE_ENGINE` env var in `config.py` — selects the engine (`"celery"` default | `"langgraph"`)
 
 ### Changed
 
-- `application/use_cases/dispatch.py` — `DispatchStories` recibe `PipelineExecutor` en lugar de `TaskQueue`; responsabilidad única y clara
-- `infrastructure/langgraph/nodes.py` — `_NoOpQueue` renombrado a `GraphRoutedQueue` con docstring que explica el patrón explícitamente
-- `services/git-sync/Dockerfile` — CMD actualizado a `python -m atdd_orchestrator`
+- `application/use_cases/dispatch.py` — `DispatchStories` receives `PipelineExecutor` instead of `TaskQueue`
+- `infrastructure/langgraph/nodes.py` — `_NoOpQueue` renamed to `GraphRoutedQueue` with explicit docstring
+- `services/git-sync/Dockerfile` — CMD updated to `python -m atdd_orchestrator`
+- All docstrings, comments, log messages and agent prompts translated to English
 
 ### Removed
 
-- `atdd_orchestrator/dispatcher.py` — eliminado (era OBSOLETO desde 0.2.0)
-- `dispatcher_langgraph.py` (raíz) — eliminado; absorbido por `LangGraphPipelineExecutor`
-- `infrastructure/git_sync.py` — eliminado; separado en `__main__.py` + `infrastructure/git_adapter.py`
+- `atdd_orchestrator/dispatcher.py` — removed (was marked OBSOLETE since 0.2.0)
+- `dispatcher_langgraph.py` (root) — removed; absorbed by `LangGraphPipelineExecutor`
+- `infrastructure/git_sync.py` — removed; split into `__main__.py` + `infrastructure/git_adapter.py`
 
 ### Architecture decisions
 
-- `__main__.py` es el entry point correcto en hexagonal architecture — los drivers de la aplicación no pertenecen a `infrastructure/`
-- `infrastructure/git_adapter.py` es un adaptador puro: solo operaciones git sin lógica de orquestación
-- `PipelineExecutor` es el puerto correcto para el punto de entrada del pipeline; `TaskQueue` queda restringido a la comunicación interna entre workers Celery
-- Celery es el motor de producción: aislamiento real por container, paralelismo entre proyectos, resiliencia ante caídas
-- LangGraph es el motor de desarrollo local: sin Redis, sin workers, ejecución secuencial en proceso
-- Lanzamiento: `python -m atdd_orchestrator` (local) o `docker compose up` (producción)
+- `__main__.py` is the correct entry point in hexagonal architecture — application drivers do not belong in `infrastructure/`
+- `infrastructure/git_adapter.py` is a pure adapter: only git operations, no orchestration logic
+- `PipelineExecutor` is the right port for the pipeline entry point; `TaskQueue` is restricted to inter-worker communication within the Celery engine
+- Celery is the production engine: real container isolation, parallel projects, crash resilience
+- LangGraph is the local development engine: no Redis, no workers, sequential in-process execution
+- Launch: `python -m atdd_orchestrator` (local) or `docker compose up` (production)
 
 ---
 
@@ -43,18 +46,18 @@ Format: `[version] — YYYY-MM-DD`
 
 ### Added
 
-- Adaptador LangGraph como alternativa a Celery + Redis (`infrastructure/langgraph/`)
-  - `state.py` — `PipelineState` TypedDict con story, status, retries
-  - `nodes.py` — 4 nodos que llaman los use cases existentes con `NoOpQueue`
-  - `graph.py` — `StateGraph` con edges condicionales: retry automático hasta 3 veces si tester/atf fallan
-- `dispatcher_langgraph.py` — entry point sin Redis; lanza el grafo por historia en status INBOX
-- `langgraph` como dependencia opcional en `pyproject.toml` (`pip install -e ".[langgraph]"`)
+- LangGraph adapter as an alternative to Celery + Redis (`infrastructure/langgraph/`)
+  - `state.py` — `PipelineState` TypedDict with story, status, retries
+  - `nodes.py` — 4 nodes that call existing use cases with `NoOpQueue`
+  - `graph.py` — `StateGraph` with conditional edges: automatic retry up to 3 times if tester/atf fail
+- `dispatcher_langgraph.py` — Redis-free entry point; invokes the graph per story in INBOX status
+- `langgraph` as optional dependency in `pyproject.toml` (`pip install -e ".[langgraph]"`)
 
 ### Architecture decisions
 
-- LangGraph hace el routing explícito (edges condicionales) en lugar de que los use cases encolen la siguiente tarea
-- Los use cases reciben `NoOpQueue` — sin cambios al dominio ni a los use cases existentes
-- Celery sigue disponible; LangGraph es opt-in, no un reemplazo obligatorio
+- LangGraph makes routing explicit (conditional edges) instead of use cases enqueuing the next task
+- Use cases receive `NoOpQueue` — no changes to domain or existing use cases
+- Celery remains available; LangGraph is opt-in, not a mandatory replacement
 
 ---
 
@@ -62,26 +65,26 @@ Format: `[version] — YYYY-MM-DD`
 
 ### Added
 
-- Orquestador completo con arquitectura hexagonal (domain / application / infrastructure)
-- `Story` entity + `Status` value object en `domain/story.py`
-- Puertos `StoryRepository`, `CodeRunner`, `TaskQueue` en `domain/ports.py`
+- Full orchestrator with hexagonal architecture (domain / application / infrastructure)
+- `Story` entity + `Status` value object in `domain/story.py`
+- Ports `StoryRepository`, `CodeRunner`, `TaskQueue` in `domain/ports.py`
 - Use cases: `dispatch`, `run_test_engineer`, `run_developer`, `run_tester`, `run_atf`
-- `FrontmatterRepo` — implementación de `StoryRepository` leyendo `story.md` con frontmatter YAML
-- `OpenCodeRunner` — implementación de `CodeRunner` vía subprocess `opencode run`
-- Celery app + `CeleryQueueAdapter` + tasks delgados para cada rol automático
-- `dispatcher.py` — entry point con polling cada 30s
-- 35 tests unitarios e de integración sin dependencias externas (stubs de puertos en `tests/stubs.py`)
-- Skills de Claude Code: `atdd_architect`, `atdd_test_engineer`, `atdd_developer`, `atdd_tester`
-- `install.sh` — sincroniza skills en `~/.claude/skills/` e instala dependencias en `.venv/`
-- `docker-compose.yml` — Redis como broker
-- `projects.yml.example` — configuración multi-proyecto de ejemplo
-- Modo migración en `atdd_architect`: convierte proyectos legacy `.atf/` al nuevo formato `.atdd/`
-- Migración real del proyecto `atf-ai` — 5 historias migradas (4 `accepted`, 1 `damaged`)
-- `PROYECTO.md` — documento de estado del proyecto
+- `FrontmatterRepo` — `StoryRepository` implementation reading `story.md` via YAML frontmatter
+- `OpenCodeRunner` — `CodeRunner` implementation via subprocess `opencode run`
+- Celery app + `CeleryQueueAdapter` + thin tasks per autonomous role
+- `dispatcher.py` — entry point with 30s polling
+- 35 unit and integration tests with no external dependencies (port stubs in `tests/stubs.py`)
+- Claude Code skills: `atdd_architect`, `atdd_test_engineer`, `atdd_developer`, `atdd_tester`
+- `install.sh` — syncs skills to `~/.claude/skills/` and installs dependencies in `.venv/`
+- `docker-compose.yml` — Redis as broker
+- `projects.yml.example` — multi-project configuration example
+- Migration mode in `atdd_architect`: converts legacy `.atf/` projects to the new `.atdd/` format
+- Real migration of `atf-ai` project — 5 stories migrated (4 `accepted`, 1 `damaged`)
+- `PROYECTO.md` — project status document
 
 ### Architecture decisions
 
-- Celery + Redis como broker para independencia entre roles automáticos
-- OpenCode para tareas técnicas (créditos Claude reservados para trabajo estratégico)
-- El rol `architect` es siempre colaborativo (Claude + humano), nunca automático
-- Estados explícitos en frontmatter de `story.md` como fuente de verdad
+- Celery + Redis as broker for isolation between autonomous roles
+- OpenCode for technical tasks (Claude credits reserved for strategic work)
+- The `architect` role is always collaborative (Claude + human), never automated
+- Explicit statuses in `story.md` frontmatter as the single source of truth
